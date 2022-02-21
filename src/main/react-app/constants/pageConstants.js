@@ -9,4 +9,4 @@ const PAGE2= {
     containerId: "events"
 };
 
-export const LIST = [page1, page2];
+export const LIST = [PAGE1, PAGE2];
