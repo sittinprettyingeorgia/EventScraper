@@ -61,6 +61,7 @@ const checkboxes = {
 
 function App() {
     const [data, setData] = useState();
+    const [displayedData, setDisplayedData] = useState([]);
     const [query, setQuery] = useState();
 
     const columns = React.useMemo(
@@ -113,11 +114,14 @@ function App() {
                 }
             ];
 
-            console.log("the data is "+data);
             if(data !== undefined && data !== null){
+                setDisplayedData(Object.values(data));
                 return Object.values(data);
             }
-            else return fillerData;
+            else {
+                setDisplayedData(fillerData);
+                return fillerData;
+            }
         },
         [data]
     );
@@ -171,20 +175,41 @@ function App() {
     }
 
     const handleClick = (e) => {
+        console.log("gettting clicked");
+        let checkboxes = document.getElementsByClassName("check");
+        let checked = undefined;
+        let events = [];
+        for(let checkbox of checkboxes){
+            if(checkbox.checked)checked = checkbox.id;
+        }
+
+        if(checked === undefined || query === undefined || query === "")
+            alert("you need to select one of the checkboxes to filter your search Or" +
+                "you need to input your query into the input box.");
+        else {
+            for(let event of memoData){
+                if(event[checked] === query)events.push(event);
+            }
+
+            setDisplayedData(events);
+            if(events.length === 0)alert("There are no records with that query." +
+                "try a different input.");
+        }
 
     };
 
     return (
         <div>
             <p> You can sort by the following checkboxes and the value of your search</p>
-            <p>Ex. to search by start date click the start date checkbox and enter the date in the input box.</p>
-            <input type="checkbox" id="name" onChange={handleCheck} />Name
-            <input type="checkbox" id="location" onChange={handleCheck} />Location
-            <input type="checkbox" id="startDate" onChange={handleCheck} />startDate
-            <input type="checkbox" id="endDate" onChange={handleCheck} />EndDate
+            <p>Ex. to search by start date click the start date checkbox and enter the date in the input box. Ex. ( "2022-02-12")</p>
+            <input type="checkbox" id="name" className="check" onChange={handleCheck} />Name
+            <input type="checkbox" id="location" className="check" onChange={handleCheck} />Location
+            <input type="checkbox" id="startDate" className="check" onChange={handleCheck} />startDate
+            <input type="checkbox" id="endDate" className="check" onChange={handleCheck} />EndDate
             <p>You will be shown all events that match you query.</p>
-            <input type="text" onChange={e => handleChange} />Filter/Sort Data
-            <Table columns={columns} data={memoData} />
+            <input type="text" onChange={handleChange} />Filter/Sort Data
+            <button type="submit" onClick={handleClick}>Submit</button>
+            <Table columns={columns} data={displayedData} />
         </div>
 
     );
