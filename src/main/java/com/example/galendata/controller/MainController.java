@@ -18,7 +18,7 @@ import java.util.concurrent.ForkJoinPool;
 
 /**
  * Main RestController class that handles all responses/requests to the Spring Rest API service.
- * AutoWires a reference to the Crawler bean created in CrawlerConfig.
+ * 
  */
 @RestController
 public class MainController {
@@ -35,16 +35,7 @@ public class MainController {
      * @return
      */
     @PostMapping("/crawl")
-    public CompletableFuture<ResponseEntity<Map<String, GalenData>>> crawl(@RequestBody CrawlInput input) {
-        /*Crawler crawler = context.getBean("crawler", Crawler.class);
-        DeferredResult<ResponseEntity<Map<String, GalenData>>> output = new DeferredResult<>();
-        ForkJoinPool.commonPool().submit(() -> {
-            Map<String, GalenData> data = crawler.search(input.getTypeOfData(),input.getPages());
-
-            dataRepo.saveAll((List<Event>)(List<?>)data.values());
-            output.setResult(new ResponseEntity<>(data, HttpStatus.OK));
-        });
-        return output;*/
+    public CompletableFuture<ResponseEntity<Map<String, GalenData>>> crawl(@RequestBody CrawlInput
         Crawler crawler = context.getBean("crawler", Crawler.class);
         return CompletableFuture.supplyAsync(() -> {
             Map<String, GalenData> data = null;
