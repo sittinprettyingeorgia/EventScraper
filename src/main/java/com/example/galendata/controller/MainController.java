@@ -35,7 +35,7 @@ public class MainController {
      * @return
      */
     @PostMapping("/crawl")
-    public CompletableFuture<ResponseEntity<Map<String, GalenData>>> crawl(@RequestBody CrawlInput
+    public CompletableFuture<ResponseEntity<Map<String, GalenData>>> crawl(@RequestBody CrawlInput input){
         Crawler crawler = context.getBean("crawler", Crawler.class);
         return CompletableFuture.supplyAsync(() -> {
             Map<String, GalenData> data = null;
