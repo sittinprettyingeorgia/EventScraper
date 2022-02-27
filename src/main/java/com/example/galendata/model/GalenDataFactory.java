@@ -17,7 +17,8 @@ public final class GalenDataFactory {
 
     public static GalenDataFactory getFactory(){
         if(galenDataFactory == null){
-            return new GalenDataFactory();
+            this.galenDataFactory = new GalenDataFactory();
+            return this.galenDataFactory;
         }
         else return galenDataFactory;
     }
