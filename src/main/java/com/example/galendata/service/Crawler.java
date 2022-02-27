@@ -17,12 +17,7 @@ import java.util.concurrent.*;
  */
 
 public class Crawler {
-    /** The reason we are using a GalenData interface here instead of just the Event class is in the case we want to
-     * search a page for multiple kinds of data. Suppose we wanted to search a list of webpages for events(same as
-     * requirements), hospitals(including name, location and hours of operation), and movies(including show times,
-     * purchase price, and movie name). Implementing the GalenData interface will allow these classes to be used
-     * interchangeably so our crawler can retrieve different kinds of data.
-     */
+
     private ExecutorService execService;
     private Integer threads;
     private final GalenDataFactory factory;
