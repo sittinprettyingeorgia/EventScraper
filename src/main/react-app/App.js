@@ -1,6 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useTable, useSortBy } from "react-table";
 import { LIST } from './constants/pageConstants';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+toast.configure({
+    position: "top-right",
+    autoClose: 5000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+});
 
 function Table({ columns, data }) {
     const {
@@ -52,19 +64,38 @@ function Table({ columns, data }) {
     );
 }
 
-const checkboxes = {
-    name: "name",
-    location: "location",
-    startDate: "startDate",
-    endDate: "endDate"
+const checkboxesMap = {
+    name: "Name",
+    location: "Location",
+    startDate: "Start Date",
+    endDate: "End Date"
 };
+
+function checkError(response){
+    if(!response.ok) throw new Error(`MyErr:${response.status}:${response.statusText}`);
+}
+
+function sendError(e) {
+    let message = "There was an error retrieving event data.";;
+
+    if(e.message.startsWith('MyErr')) {
+        let [statusCode, statusMessage] = e.message.slice(6, e.message.length).split(':');
+        message = "There was an error retrieving event data.\n" +
+            `statusCode:${statusCode}\n` + `statusMessage:${statusMessage}`;
+    }
+
+    const notifyError = () => toast.error(message);
+    notifyError();
+}
 
 function App() {
     const [data, setData] = useState();
+    const [allData, setAllData] = useState();
     const [displayedData, setDisplayedData] = useState([]);
     const [query, setQuery] = useState();
-
-    const columns = React.useMemo(
+    //useMemo enables us to only render columns variable if there is a change to the dependency array
+    //because the dependency array is empty this will only render columns a single time.
+    const columns = useMemo(
         () => [
             {
                 Header: "Events",
@@ -91,12 +122,9 @@ function App() {
                     }
                 ]
             }
-        ],
-        []
-    );
-
-    const memoData= React.useMemo(
-        () => {
+        ], []);
+    //memoData will only rerender in the case of a change to the data we have received from the api call.
+    const memoData = useMemo(() => {
             let fillerData = [
                 {
                     name: "Row 1 Column 1",
@@ -114,19 +142,70 @@ function App() {
                 }
             ];
 
-            if(data !== undefined && data !== null){
-                setDisplayedData(Object.values(data));
+            if(allData !== undefined && allData !== null){
+                setDisplayedData(Object.values(allData));
                 return Object.values(data);
             }
             else {
                 setDisplayedData(fillerData);
                 return fillerData;
             }
-        },
-        [data]
-    );
+        }, [allData]);
+
+    const handleCheck = (e) => {
+        for( let item in checkboxes){
+            if(item !== e.target.id) {
+                let checkbox = document.getElementById(item);
+                if(checkbox.hasAttribute("disabled")) checkbox.removeAttribute("disabled");
+                else checkbox.setAttribute("disabled","");
+            }
+        }
+    };
+
+    const handleClick = () => {
+        let checkboxes = document.getElementsByClassName("check");
+        let checked = undefined;
+        let events = [];
+        for(let checkbox of checkboxes){
+            if(checkbox.checked)checked = checkbox.id;
+        }
+
+        if(checked === undefined || query === undefined || query === "") {
+            const notifyError = () => toast.error("you need to select one of the checkboxes to filter your search Or" +
+                "you need to input your query into the input box.");
+            notifyError();
+        }
+        else {
+            for(let event of memoData){
+                if(event[checked] === query)events.push(event);
+            }
+
+            setDisplayedData(events);
+            if(events.length === 0) {
+                const notifyError = () => toast.error("There are no records with that query." +
+                    "try a different input.");
+                notifyError();
+            }
+        }
+
+    };
+
+    //makes modifying checkboxes easier.
+    const checkboxes = useMemo(() => {
+        let checkboxes = [];
+        let uniqKey = 0;
+        for(const [key,val] in Object.entries(checkboxesMap)){
+            console.log("value",val);
+            checkboxes.push(<label key={uniqKey}>{val}<input type="checkbox" id={`${key}`}
+                                               className="check" onChange={handleCheck}/></label>);
+            uniqKey++;
+        }
+        return checkboxes;
+    },[checkboxesMap]);
 
     useEffect(() => {
+        let continueProcess = true;
+
         const postData = async() => {
             let pages = {
                 "typeOfData": "event",
@@ -143,20 +222,34 @@ function App() {
                 },
                 body: jsonObj
             })
-                .then(response => response.json())
-                .then(json => console.log(json))
-                .catch(e => console.log(e));
+                .then(response => {
+                    checkError(response);
+                    return response.json();
+                })
+                .then(json => {
+                    if(continueProcess) setData(json);
+                })
+                .catch(e => sendError(e));
         };
 
-        const getData = async() => {
-            fetch('api/getData')
-                .then(response => response.json())
-                .then(json => setData(json))
-                .catch(e => console.log(e));
-        };
+        const getAllData = async() => {
+            fetch('/api/getData')
+                .then(response => {
+                    checkError(response);
 
+                    return response.json();
+                })
+                .then(json => {
+                    if(continueProcess) setAllData(json);
+                })
+                .catch(e => sendError(e));
+        };
         postData();
-        getData();
+        getAllData();
+        //prevent data from being pushed to unmounted components/memory leaks.
+        return () => {
+            continueProcess = false;
+        };
 
     },[]);
 
@@ -164,48 +257,12 @@ function App() {
         setQuery(e.target.value);
     };
 
-    const handleCheck = (e) => {
-        for( let item in checkboxes){
-            if(item !== e.target.id) {
-                let checkbox = document.getElementById(item);
-                if(checkbox.hasAttribute("disabled")) checkbox.removeAttribute("disabled");
-                else checkbox.setAttribute("disabled","");
-            }
-        }
-    }
-
-    const handleClick = (e) => {
-        console.log("gettting clicked");
-        let checkboxes = document.getElementsByClassName("check");
-        let checked = undefined;
-        let events = [];
-        for(let checkbox of checkboxes){
-            if(checkbox.checked)checked = checkbox.id;
-        }
-
-        if(checked === undefined || query === undefined || query === "")
-            alert("you need to select one of the checkboxes to filter your search Or" +
-                "you need to input your query into the input box.");
-        else {
-            for(let event of memoData){
-                if(event[checked] === query)events.push(event);
-            }
-
-            setDisplayedData(events);
-            if(events.length === 0)alert("There are no records with that query." +
-                "try a different input.");
-        }
-
-    };
 
     return (
         <div>
             <p> You can sort by the following checkboxes and the value of your search</p>
-            <p>Ex. to search by start date click the start date checkbox and enter the date in the input box. Ex. ( "2022-02-12")</p>
-            <input type="checkbox" id="name" className="check" onChange={handleCheck} />Name
-            <input type="checkbox" id="location" className="check" onChange={handleCheck} />Location
-            <input type="checkbox" id="startDate" className="check" onChange={handleCheck} />startDate
-            <input type="checkbox" id="endDate" className="check" onChange={handleCheck} />EndDate
+            <p> Ex. to search by start date click the start date checkbox and enter the date in the input box. Ex. ( "2022-02-12")</p>
+            {checkboxes}
             <p>You will be shown all events that match you query.</p>
             <input type="text" onChange={handleChange} />Filter/Sort Data
             <button type="submit" onClick={handleClick}>Submit</button>

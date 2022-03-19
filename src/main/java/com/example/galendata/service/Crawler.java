@@ -18,8 +18,6 @@ import java.util.concurrent.*;
 
 public class Crawler {
 
-    private ExecutorService execService;
-    private Integer threads;
     private final GalenDataFactory factory;
 
     public Crawler(){
@@ -46,14 +44,6 @@ public class Crawler {
         dataSum.putAll(dataPoint);
     }
     /**
-     * Sets concurrency of crawler.
-     * @param num of threads
-     */
-    public void setConcurrency(Integer num){
-        this.execService = Executors.newFixedThreadPool(num);
-        this.threads = num;
-    }
-    /**
      * Conducts a search of the current url for the appropriate data.
      * @param typeOfData A string that specifies the kind of data we are looking for ie.(event, location, etc).
      * @param pages list of pages we want to search for data
@@ -66,9 +56,11 @@ public class Crawler {
         int PAGE_LIMIT = pageQueue.size();
         Map<String, GalenData> result = new HashMap<>();
         Map<String, Page> pagesVisited = new HashMap<>();
+        int numOfThreads = PAGE_LIMIT < 25 ? PAGE_LIMIT : 10;
+        ExecutorService execService = Executors.newFixedThreadPool(numOfThreads);
 
         //We do not want to assign more threads than there are pages.
-        for(int i = 0; i<PAGE_LIMIT && i<threads; i++) {
+        for(int i = 0; i<numOfThreads; i++) {
             //Each thread within our pool will attempt to scrape a page until the page limit is reached.
             Future<Map<String, GalenData>> future = execService.submit(() -> {
                 Map<String, GalenData> temp = new HashMap<>();

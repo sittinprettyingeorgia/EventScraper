@@ -16,5 +16,4 @@ public class CrawlInput {
     public void addPage(Page page){
         this.pages.add(page);
     }
-
 }

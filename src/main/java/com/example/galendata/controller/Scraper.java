@@ -15,6 +15,7 @@ import com.example.galendata.constants.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -84,7 +85,7 @@ public class Scraper {
     }
 
     private GalenData processParentSiblingsForEvent(Element row){
-        String title = row.attr("title");
+        String title = row.attr("title").toLowerCase();
         Element parent = row.parent();
         Element[] siblings = new Element[4];
         assert parent != null;
@@ -92,7 +93,8 @@ public class Scraper {
 
         LocalDate startDate = LocalDate.parse(siblings[1].ownText());
         LocalDate endDate = LocalDate.parse(siblings[2].ownText());
-        String location = siblings[3].ownText();
+        String location = siblings[3].ownText().toLowerCase();
+
 
         return GalenDataFactory.getFactory().getEvent("",title,startDate,endDate,location);
     }
@@ -127,12 +129,12 @@ public class Scraper {
         /*
          * get the event title.
          */
-        String title = children[1].ownText();
+        String title = children[1].ownText().toLowerCase();
 
         /*
          * get our location
          */
-        String location = children[2].ownText();
+        String location = children[2].ownText().toLowerCase();
 
         return GalenDataFactory.getFactory().getEvent("",title,startDate,endDate,location);
     }

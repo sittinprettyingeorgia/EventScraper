@@ -19,7 +19,6 @@ public class CrawlerConfig {
         Crawler crawler = new Crawler ();
 
         //setConcurrency assigns amount of Threads operating within Crawler.
-        crawler.setConcurrency(2);
         return crawler;
     }
 

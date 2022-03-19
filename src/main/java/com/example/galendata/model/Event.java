@@ -28,7 +28,8 @@ public class Event implements GalenData {
     public String getKey() {
         return this.name;
     }
-
+    @Override
+    public UUID getId() {return this.id;}
     @Override
     public void setWebsiteName(String websiteName){
         this.websiteName = websiteName;
